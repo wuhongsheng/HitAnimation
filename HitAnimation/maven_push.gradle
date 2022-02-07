@@ -1,0 +1,53 @@
+apply plugin: 'maven'
+
+def getSnapshotsRepositoryUrl() {
+    return hasProperty('SNAPSHOTS_REPOSITORY_URL') ? SNAPSHOTS_REPOSITORY_URL : ""
+}
+
+def getReleaseRepositoryUrl() {
+    return hasProperty('RELEASE_REPOSITORY_URL') ? RELEASE_REPOSITORY_URL : ""
+}
+
+def getRepositoryUsername() {
+    return hasProperty('NEXUS_USERNAME') ? NEXUS_USERNAME : ""
+}
+
+def getRepositoryPassword() {
+    def password = ''
+    if (rootProject.file('local.properties').exists()) {
+        Properties properties = new Properties()
+        properties.load(rootProject.file('local.properties').newDataInputStream())
+        password = properties.get("nexus_password")
+    }
+    return password
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            def pom_groupId = "com.aichiptech.ui"
+            def pom_name = "hitanimation"
+            def pom_artifact_id = "hitanimation"
+            def pomPackaging = "aar"
+            def versionName = "-SNAPSHOT"
+            if (versionName.endsWith("-SNAPSHOT")) {
+                repository(url: getSnapshotsRepositoryUrl()) {
+                    authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+                }
+            } else {
+                repository(url: getReleaseRepositoryUrl()) {
+                    authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+                }
+            }
+
+            pom.project {
+                groupId = pom_groupId
+                artifactId = pom_artifact_id
+                name pom_name
+                version = versionName
+                packaging pomPackaging
+            }
+        }
+    }
+}
+
